@@ -9,11 +9,9 @@
     "gpick": "./gpick.js"
   },
   "dependencies": {
-    "chalk": "^5.0.1",
+    "blessed": "^0.1.81",
     "isomorphic-git": "^1.19.2",
-    "strip-ansi": "^7.0.1",
     "timeago.js": "^4.0.2",
-    "wrap-ansi": "^8.0.1",
     "yargs": "^17.5.1"
   }
 }

@@ -3,6 +3,10 @@ const fs = require('fs')
 const dir = process.cwd()
 const yargs = require('yargs/yargs')
 const timeAgo = require('timeago.js')
+const blessed = require('blessed')
+
+// wrapping modulus
+const mod = (n, m) => ((n % m) + m) % m
 
 function parseCommits (log) {
   return log.map(item => {
@@ -23,10 +27,6 @@ function parseCommits (log) {
 }
 
 async function main () {
-  const wrap = (await import('wrap-ansi')).default
-  const colors = (await import('chalk')).default
-  const stripAnsi = (await import('strip-ansi')).default
-
   const y = yargs(process.argv.slice(2))
     .usage('$0 <FROM> <TO> or just <TO>')
     .help()
@@ -58,17 +58,30 @@ async function main () {
     process.exit(1)
   }
 
-  const commitsFrom = parseCommits(await git.log({ fs, dir, depth: 1, branch: branchFrom }))
-  const commitsTo = parseCommits(await git.log({ fs, dir, depth: 1, branch: branchTo }))
+  const commitsFrom = parseCommits(await git.log({ fs, dir, ref: branchFrom }))
+  const commitsTo = parseCommits(await git.log({ fs, dir, ref: branchTo }))
+  const commitsDiff = commitsFrom.filter(f => !commitsTo.find(t => t.oid === f.oid))
 
-  for (const { oid, author, message, when } of commitsFrom) {
-    let m = `${colors.red(oid)} - ${colors.white(message.replace(/\n/g, ' '))} ${colors.green('(' + when + ')')} ${colors.blueBright(`<${author}>`)}`
-    if (stripAnsi(m).length > process.stdout.columns) {
-      m = wrap(m, process.stdout.columns - 3).split('\n')[0] + '...'
-    }
-    if (!commitsTo.find(c => c.oid === oid)) {
-      console.log(m)
-    }
+  if (!process.stdout.isTTY) {
+    console.log(commitsDiff.map(c => `${c.oid} - ${c.message} (${c.when}) <${c.author}>`).join('\n'))
+    process.exit(0)
+  } else {
+    const screen = blessed.screen({ smartCSR: true })
+    screen.title = `gpick ${branchFrom} ${branchTo}`
+    screen.key(['escape', 'q', 'C-c'], (ch, key) => process.exit(0))
+
+    const list = blessed.list({
+      height: '100%',
+      width: '100%',
+      interactive: true,
+      invertSelected: true,
+
+      tags: true,
+      items: commitsDiff.map(c => `{red-fg}${c.oid}{/} - ${c.message} (${c.when}) <${c.author}>`)
+    })
+    list.focus()
+    screen.append(list)
+    screen.render()
   }
 }
 
