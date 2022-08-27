@@ -1,0 +1,14 @@
+{
+  "name": "gpick",
+  "version": "0.0.0",
+  "description": "",
+  "keywords": [],
+  "author": "David Konsumer <konsumer@jetboystudio.com> (https://konsumer.js.org/)",
+  "license": "MIT",
+  "bin": {
+    "gpick": "./gpick.js"
+  },
+  "dependencies": {
+    "isomorphic-git": "^1.19.2"
+  }
+}
