@@ -74,6 +74,8 @@ async function main () {
 
     const choices = new Set()
 
+    const items = commitsDiff.map((c, i) => `${choices.has(i) ? '*' : ' '} {red-fg}${c.oid}{/red-fg} - ${c.message} {green-fg}(${c.when}){/green-fg} {blue-fg}<${c.author}>{/blue-fg}`)
+
     const list = blessed.list({
       width: '100%',
       invertSelected: false,
@@ -83,31 +85,22 @@ async function main () {
       keys: true,
       mouse: true,
       tags: true,
-      items: commitsDiff.map((c, i) => `${choices.has(i) ? '*' : ' '} {red-fg}${c.oid}{/red-fg} - ${c.message} {green-fg}(${c.when}){/green-fg} {blue-fg}<${c.author}>{/blue-fg}`)
+      items
     })
     list.focus()
     screen.append(list)
-
-    // list.key(['space'], () => {
-    //   choices.has(list.selected)
-    //     ? choices.delete(list.selected)
-    //     : choices.add(list.selected)
-    //   const c = commitsDiff[list.selected]
-    //   // list.setLine(list.selected, `${choices.has(list.selected) ? '*' : ' '} {red-fg}${c.oid}{/red-fg} - ${c.message} {green-fg}(${c.when}){/green-fg} {blue-fg}<${c.author}>{/blue-fg}`)
-    //   list.setLine(list.selected, choices.has(list.selected) ? '*' : ' ')
-    //   screen.render()
-    // })
 
     list.on('select', () => {
       choices.has(list.selected)
         ? choices.delete(list.selected)
         : choices.add(list.selected)
       const c = commitsDiff[list.selected]
-      // hmm, not working
-      list.setLine(list.selected, `${choices.has(list.selected) ? '*' : ' '} {red-fg}${c.oid}{/red-fg} - ${c.message} {green-fg}(${c.when}){/green-fg} {blue-fg}<${c.author}>{/blue-fg}`)
-      list.render()
+      list.setItem(list.selected, `${choices.has(list.selected) ? '*' : ' '} {red-fg}${c.oid}{/red-fg} - ${c.message} {green-fg}(${c.when}){/green-fg} {blue-fg}<${c.author}>{/blue-fg}`)
       screen.render()
-      console.log(list.selected)
+    })
+
+    list.key(['space'], () => {
+
     })
 
     const infobar = blessed.box({
