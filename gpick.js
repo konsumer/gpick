@@ -28,6 +28,8 @@ function parseCommits (log) {
   })
 }
 
+const help = '{center}ESC to quit, arrows to move, enter to choose, space to do merge{/center}'
+
 async function main () {
   const y = yargs(process.argv.slice(2))
     .usage('$0 <FROM> <TO> or just <TO>')
@@ -77,6 +79,7 @@ async function main () {
     const items = commitsDiff.map((c, i) => `${choices.has(i) ? '*' : ' '} {red-fg}${c.oid}{/red-fg} - ${c.message} {green-fg}(${c.when}){/green-fg} {blue-fg}<${c.author}>{/blue-fg}`)
 
     const list = blessed.list({
+      parent: screen,
       width: '100%',
       invertSelected: false,
       style: {
@@ -88,7 +91,6 @@ async function main () {
       items
     })
     list.focus()
-    screen.append(list)
 
     list.on('select', () => {
       choices.has(list.selected)
@@ -100,10 +102,16 @@ async function main () {
     })
 
     list.key(['space'], () => {
-
+      if (!choices.size) {
+        message.error('No commits selected.')
+      } else {
+        // TODO: do the actual cherry-pick here
+        message.log(` Merging ${choices.size} commits. `)
+      }
     })
 
     const infobar = blessed.box({
+      parent: screen,
       width: '100%',
       height: 1,
       bottom: 0,
@@ -112,9 +120,19 @@ async function main () {
         fg: 'black',
         bg: 'grey'
       },
-      content: '{center}Use esc to quit, arrows to navigate, enter to choose commits, space to cherry-pick.{/center}'
+      content: help
     })
-    screen.append(infobar)
+
+    const message = blessed.message({
+      parent: screen,
+      top: 'center',
+      left: 'center',
+      height: 'shrink',
+      width: '50%',
+      align: 'center',
+      hidden: true,
+      border: 'line'
+    })
 
     screen.render()
   }
